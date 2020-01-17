@@ -14,13 +14,19 @@ func TestSvm(t *testing.T) {
 	}
 
 	fmt.Println("Creating Storage VM...")
-	err = c.CreateStorageVM("test-svm", "Provisioned by api", "")
+	err = c.CreateStorageVM("test-svm2", "Provisioned by api", "")
+	if err != nil {
+		t.Error(err)
+	}
+
+	fmt.Println("Creating Storage VM...")
+	err = c.CreateStorageVM("test-svm2", "Provisioned by api", "")
 	if err != nil {
 		t.Error(err)
 	}
 
 	fmt.Println("Looking up UUID...")
-	id, err := c.GetStorageVmUUIDByName("test-svm")
+	id, err := c.GetStorageVmUUIDByName("test-svm2")
 	if err != nil {
 		t.Error(err)
 	}
@@ -35,6 +41,12 @@ func TestSvm(t *testing.T) {
 	fmt.Println(svm.Name)
 	// Output: test-svm
 
+
+	fmt.Println("Deleting Storage VM...")
+	err = c.DeleteStorageVM(id)
+	if err != nil {
+		t.Error(err)
+	}
 
 	fmt.Println("Deleting Storage VM...")
 	err = c.DeleteStorageVM(id)

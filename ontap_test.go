@@ -8,7 +8,7 @@ import (
 func TestCluster(t *testing.T) {
 	fmt.Println("Test: Get Cluster Info")
 
-	c, err := NewClient("apiuser", "foobar11", "10.10.10.111", true, true)
+	c, err := NewClient("apiuser", "apipassword", "10.10.10.111", true, true)
 	if err != nil {
 		t.Error(err)
 	}

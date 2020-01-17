@@ -10,6 +10,7 @@ type HttpError struct {
 	Error struct {
 		Message string `json:"message"`
 		Code    string `json:"code"`
+		Target  string `json:"target":omitempty`
 	} `json:"error"`
 }
 

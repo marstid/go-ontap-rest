@@ -17,6 +17,8 @@ func TestVolume(t *testing.T) {
 	fmt.Println("Creating Aggregate...")
 	err = c.CreateAggregate("simsan-01","vtaggr", 5)
 	if err != nil {
+		//e := err.(*apiError)
+		//e.ErrorCode()
 		t.Error(err)
 	}
 
@@ -32,12 +34,47 @@ func TestVolume(t *testing.T) {
 		t.Error(err)
 	}
 
+	fmt.Println("Creating Volume to update...")
+	err = c.CreateVolume("testpatch", "Test comment", "vtsvm",  []string{"vtaggr"}, 1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	fmt.Println("Get Volume UUID...")
+	patchId,err := c.GetVolumeUUID("testpatch")
+	if err != nil {
+		t.Error(err)
+	}
+
+	fmt.Println("Updating Volume...")
+	err = c.UpdateVolume(patchId, "aftertestpatch", "Test comment after update",  1)
+	if err != nil {
+		t.Error(err)
+	}
+
 
 	fmt.Println("Get Volume UUID...")
 	id,err := c.GetVolumeUUID("vtvolume")
 	if err != nil {
 		t.Error(err)
 	}
+
+	fmt.Println("Get Volume by UUID...")
+	vol,err := c.GetVolume(id)
+	if err != nil {
+		t.Error(err)
+	}
+	if vol.Name != "vtvolume" {
+		t.Error(err)
+	}
+
+	/*
+	fmt.Println("Get non existing Volume UUID...")
+	_,err = c.GetVolumeUUID("apa")
+	if err != nil {
+		t.Error(err)
+	}
+*/
 
 	fmt.Println("Delete Volume...")
 	err = c.DeleteVolume(id)

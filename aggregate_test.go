@@ -8,7 +8,7 @@ import (
 func TestAggr(t *testing.T) {
 	fmt.Println("Test: Get Aggrs Info")
 
-	c, err := NewClient("apiuser", "foobar11", "10.10.10.111", true, true)
+	c, err := NewClient("apiuser", "apipassword", "10.10.10.111", true, true)
 	if err != nil {
 		t.Error(err)
 	}
@@ -17,13 +17,6 @@ func TestAggr(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	/*
-	for _, v := range data {
-
-		t.Log(v.UUID)
-	}
-	 */
 
 	fmt.Println("Creating Aggregate...")
 	err = c.CreateAggregate("simsan-01","foobar", 5)
@@ -37,9 +30,6 @@ func TestAggr(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	//fmt.Println(stringutil.Reverse("hello"))
-	// Output: golly
 
 	fmt.Println("Deleting Aggregate...")
 	err = c.DeleteAggregate(id)

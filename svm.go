@@ -3,6 +3,7 @@ package ontap
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -26,7 +27,8 @@ func (c *Client) GetStorageVmUUIDByName(name string) (uuid string, err error) {
 
 	}
 
-	return "", fmt.Errorf("0 - Storage VM with name %s not found", name)
+	//return "", fmt.Errorf("0 - Storage VM with name %s not found", name)
+	return "", &apiError{0,"0 - Storage VM with name " + name + "%s not found"}
 }
 
 // Return a list of svm objects
@@ -35,13 +37,13 @@ func (c *Client) GetStorageVM(uuid string) (svm StorageVM, err error) {
 
 	data, err := c.clientGet(uri)
 	if err != nil {
-		return svm, err
+		return svm,  &apiError{1, err.Error()}
 	}
 
 	var resp StorageVM
-	json.Unmarshal(data, &resp)
+	err = json.Unmarshal(data, &resp)
 	if err != nil {
-		return svm, err
+		return svm, &apiError{2, err.Error()}
 	}
 
 	return svm, nil
@@ -54,14 +56,14 @@ func (c *Client) GetStorageVMsShort() (svms []Svm, err error) {
 
 	data, err := c.clientGet(uri)
 	if err != nil {
-		fmt.Println("Error: " + err.Error())
-		return svms, err
+		//fmt.Println("Error: " + err.Error())
+		return svms, &apiError{1, err.Error()}
 	}
 
 	var resp SvmResponse
-	json.Unmarshal(data, &resp)
+	err = json.Unmarshal(data, &resp)
 	if err != nil {
-		return svms, err
+		return svms, &apiError{2, err.Error()}
 	}
 
 	for _, v := range resp.Records {
@@ -86,8 +88,8 @@ func (c *Client) CreateStorageVM(name, comment, ipSpaceUUID string) (err error){
 	jsonPayload, _ := json.Marshal(payload)
 	data, err := c.clientPost(uri, jsonPayload)
 	if err != nil {
-		fmt.Println("Error: " + err.Error())
-		return err
+		//fmt.Println("Error: " + err.Error())
+		return &apiError{1, err.Error()}
 	}
 
 	var result map[string]interface{}
@@ -107,7 +109,8 @@ func (c *Client) CreateStorageVM(name, comment, ipSpaceUUID string) (err error){
 	}
 
 	if createJob.State == "failure" {
-		return fmt.Errorf("%d - %s", createJob.Code, createJob.Message)
+		return &apiError{int64(createJob.Code),  createJob.Message}
+		//return fmt.Errorf("%d - %s", createJob.Code, createJob.Message)
 	}
 
 	return nil
@@ -115,14 +118,20 @@ func (c *Client) CreateStorageVM(name, comment, ipSpaceUUID string) (err error){
 
 func (c *Client) DeleteStorageVM(uuid string) (err error){
 	uri := "/api/svm/svms/" + uuid
-	//fmt.Println(uri)
+
 	data, err := c.clientDelete(uri)
 	if err != nil {
-		return err
+		if strings.Contains(err.Error(),"Error-4"){
+			return &apiError{4, fmt.Sprintf("SVM with UUID \"%s\" not found", uuid)}
+		}
+		return &apiError{1, err.Error()}
 	}
 
 	var result map[string]interface{}
-	json.Unmarshal(data, &result)
+	err = json.Unmarshal(data, &result)
+	if err != nil {
+		return &apiError{2, err.Error()}
+	}
 
 	job := result["job"].(map[string]interface{})
 	link := job["_links"].(map[string]interface{})
@@ -137,7 +146,7 @@ func (c *Client) DeleteStorageVM(uuid string) (err error){
 	}
 
 	if deleteJob.State == "failure" {
-		return fmt.Errorf("%d - %s", deleteJob.Code, deleteJob.Message)
+		return &apiError{int64(deleteJob.Code),  deleteJob.Message}
 	}
 
 	return nil

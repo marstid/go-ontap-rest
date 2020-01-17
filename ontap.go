@@ -20,6 +20,20 @@ type Client struct {
 	TimeOut  time.Duration
 }
 
+type apiError struct{
+	errorCode int64
+	err string
+}
+
+func (e *apiError) Error() string {
+	return fmt.Sprintf("%d - API Error - %s", e.errorCode, e.err)
+}
+func (e *apiError) ErrorCode() int64 {
+	return  e.errorCode
+}
+
+
+
 func NewClient(user, password, host string, debug, ssl bool) (client *Client, error error) {
 
 	return &Client{
@@ -56,6 +70,25 @@ func (c *Client) clientPost(uri string, json []byte) (data []byte, err error) {
 	payload := bytes.NewReader(json)
 
 	req, err := http.NewRequest("POST", url, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
+func (c *Client) clientPatch(uri string, json []byte) (data []byte, err error) {
+
+	url := "https://" + c.Host + uri
+
+	payload := bytes.NewReader(json)
+
+	req, err := http.NewRequest("PATCH", url, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -113,13 +146,14 @@ func (c *Client) doRequest(req *http.Request) ([]byte, error) {
 
 	if resp.StatusCode > 299 {
 
-		var jsonError string
 		if strings.Contains(string(body), "message") {
 			var jec HttpError
 			json.Unmarshal(body, &jec)
-			jsonError = jsonError + jec.Error.Code + " - API error - " + jec.Error.Message
+			if jec.Error.Code == "4" {
+				return nil,  fmt.Errorf("Error-%s %s %s", jec.Error.Code, jec.Error.Target, jec.Error.Message)
+			}
 			fmt.Println(string(body))
-			return nil, fmt.Errorf("%s", jsonError)
+			return nil,  fmt.Errorf("%s", jec.Error.Message)
 		}
 		return nil, fmt.Errorf("%s", body)
 
